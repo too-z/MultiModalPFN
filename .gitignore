@@ -197,3 +197,5 @@ mmpfn/data/petfinder_adoption_prediction
 mmpfn/data/cbis_ddsm
 mmpfn/data/ol3i
 *.pt
+
+mmpfn/data/pawpularity

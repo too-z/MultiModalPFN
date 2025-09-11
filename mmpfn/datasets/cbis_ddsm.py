@@ -75,7 +75,7 @@ class CBISDDSMDataset(Dataset):
         
         return self.images
         
-    def get_embeddings(self, emb_type='patch', batch_size=1, save=True, mode='train'):
+    def get_embeddings(self, emb_type='cls', batch_size=1, save=True, mode='train'):
         
         self.batch_size = batch_size
         
