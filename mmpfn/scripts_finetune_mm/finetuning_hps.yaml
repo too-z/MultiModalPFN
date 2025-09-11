@@ -1,0 +1,11 @@
+# Learning Hyperparameters for finetuning
+learning_rate: 0.00001 # 1e-5 (yaml does not support scientific notation)
+batch_size: 10
+# Less important Hyperparameters
+update_every_n_steps: 1
+validate_every_n_steps: 1
+max_steps: 10000
+adaptive_rate: 0.2
+adaptive_offset: 5
+min_patience: 50
+max_patience: 100

@@ -1,0 +1,27 @@
+torch==2.4.1
+torchvision==0.19.1
+torchmetrics
+
+scikit-learn
+pyyaml
+seaborn
+tqdm
+numpy==1.26.4
+hyperopt
+configspace
+
+# finetune tabpfn v2
+ruff
+lightgbm
+pynvml
+schedulefree
+
+# DinoV2
+einops
+omegaconf
+fvcore
+iopath
+# xformers==0.0.18
+# submitit
+# --extra-index-url https://pypi.nvidia.com
+# cuml-cu11
