@@ -16,6 +16,9 @@ from torch import nn
 from torch.nn import functional as F
 from torch.utils.checkpoint import checkpoint
 
+from matplotlib import pyplot as plt
+import seaborn as sns
+
 from mmpfn.models.mmpfn_v2.model.encoders import (
     LinearInputEncoderStep,
     NanHandlingEncoderStep,
@@ -73,7 +76,6 @@ class CrossQueryAttentionMerger(nn.Module):
 
     def forward(self, src):
         src = src.squeeze(0)
-        
         B, _, _ = src.shape
         src = self.k_norm(src)
         q = self.q_proj(self.q_norm(self.queries)).unsqueeze(1).expand(-1, B, -1)
@@ -936,6 +938,20 @@ class PerFeatureTransformer(nn.Module):
             layer.empty_trainset_representation_cache()
     
     def token_append(self, embedded_x, image) -> torch.Tensor:
+        # correlation_matrix_avg = np.zeros((embedded_x.shape[-2], image.shape[-2]))
+        # for i in range(embedded_x.shape[-2]):
+        #     for j in range(image.shape[-2]):
+        #         correlation_matrix_avg[i][j] = torch.mm(F.normalize(embedded_x[0,:,0,:], p=2, dim=1), F.normalize(image[0,:,0,:], p=2, dim=1).T).mean().item()
+        # plt.figure(figsize=(12, 6))
+        # sns.heatmap(
+        #     correlation_matrix_avg,
+        #     annot=True,
+        #     cmap='coolwarm',
+        #     xticklabels=[f'tabular feature {i}' for i in range(embedded_x.shape[-2])],
+        #     yticklabels=[f'tabular feature {i}' for i in range(image.shape[-2])]
+        # )
+        # plt.title('correlation matrix (average sample similarity)')
+        # plt.savefig('correlation_matrix.png')
         embedded_x = torch.cat((embedded_x, image), dim=-2)
         return embedded_x
     

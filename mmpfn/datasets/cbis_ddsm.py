@@ -13,7 +13,7 @@ from mmpfn.models.dino_v2.models.vision_transformer import vit_base
 
 
 class CBISDDSMDataset(Dataset):
-    def __init__(self, data_path, data_name, kind, image_type='ROI'):
+    def __init__(self, data_path, data_name, kind, image_type):
         
         self.kind = kind  # mass calc
         self.data_path = data_path
@@ -21,7 +21,7 @@ class CBISDDSMDataset(Dataset):
         
         self.df = pd.read_csv(os.path.join(data_path, data_name))
         # print(self.df[['image file path', 'cropped image file path', 'ROI mask file path']].isna().sum())
-        # Define categorical column names explicitly
+        
         if self.kind == 'mass':
             self.cat_cols = ['left or right breast', 'image view', 'abnormality id', 'mass shape', 'mass margins']
             self.numeric_cols = ['breast_density', 'assessment', 'subtlety']
@@ -29,7 +29,16 @@ class CBISDDSMDataset(Dataset):
             self.cat_cols = ['left or right breast', 'image view', 'abnormality id', 'calc type', 'calc distribution']
             self.numeric_cols = ['breast density', 'assessment', 'subtlety']
             
-        col_unused = ['patient_id', 'abnormality type']
+        if self.image_type == 'full':
+            self.image_cols = ['image file path']
+        elif self.image_type == 'crop':
+            self.image_cols = ['cropped image file path']
+        elif self.image_type == 'ROI':
+            self.image_cols = ['ROI mask file path']
+        elif self.image_type == 'all':
+            self.image_cols = ['image file path', 'cropped image file path', 'ROI mask file path']
+            
+        # col_unused = ['patient_id', 'abnormality type']
         self.target_col = 'pathology'
 
         self.encoder = OrdinalEncoder()
@@ -40,20 +49,12 @@ class CBISDDSMDataset(Dataset):
         self.df[self.target_col] = self.df[self.target_col].replace('BENIGN_WITHOUT_CALLBACK', 'BENIGN')
         self.y = self.target_encoder.fit_transform(self.df[self.target_col])
 
+
     def get_images(self, img_size=14*24): # image size must be a multiple of 14
-        
+                
         self.images = []
         
-        if self.image_type == 'full':
-            image_cols = ['image file path']
-        elif self.image_type == 'crop':
-            image_cols = ['cropped image file path']
-        elif self.image_type == 'ROI':
-            image_cols = ['ROI mask file path']
-        elif self.image_type == 'all':
-            image_cols = ['image file path', 'cropped image file path', 'ROI mask file path']
-        
-        for i, paths in self.df[image_cols].iterrows():
+        for _, paths in self.df[self.image_cols].iterrows():
             image_set = []
             for path in paths:
                 image_path = os.path.join(self.data_path, 'jpeg', path.split('/')[-2])
@@ -67,28 +68,22 @@ class CBISDDSMDataset(Dataset):
                     image_set.append(img)
             self.images.append(image_set)
         
-        self.images = np.stack(self.images, axis=0)  # (N, H, W, C)
-        self.images = torch.from_numpy(
-            np.transpose(self.images, (0,1,4,2,3))
-        ).float()
+        self.images = np.stack(self.images, axis=0)  # (B, N, H, W, C)
+        self.images = torch.from_numpy(np.transpose(self.images, (0,1,4,2,3))).float() # (B, N, C, H, W)
         self.images /= 255.0
         
         return self.images
         
-    def get_embeddings(self, emb_type='cls', batch_size=1, save=True, mode='train'):
         
-        self.batch_size = batch_size
+    def get_embeddings(self, batch_size=16, mode='train'):
         
-        path = f'embeddings/cbis_ddsm/{self.kind}_{emb_type}_{mode}_{self.image_type}.pt'
+        path = f'embeddings/cbis_ddsm/{self.kind}_{mode}_{self.image_type}.pt'
 
         if os.path.exists(path):
             print(f"Load embeddings from {path}")
             self.embeddings = torch.load(path)
         else:
-            image_encoder = vit_base(
-                patch_size=14, img_size=518, init_values=1.0, num_register_tokens=0, block_chunks=0
-            )
-
+            image_encoder = vit_base(patch_size=14, img_size=518, init_values=1.0, num_register_tokens=0, block_chunks=0)
             image_model_path = f"{Path().absolute()}/parameters/dinov2_vitb14_pretrain.pth"
             image_state_dict = torch.load(image_model_path)
             image_encoder.load_state_dict(image_state_dict)
@@ -98,25 +93,16 @@ class CBISDDSMDataset(Dataset):
             
             with torch.no_grad():
                 all_embeddings = []
-                for i in range(0, self.images.shape[0], self.batch_size):
-                    batch = self.images[i:i+self.batch_size].to("cuda", non_blocking=True) # Grab a batch of shape [B, 3, H, W, C]
+                for i in range(0, self.images.shape[0], batch_size):
+                    batch = self.images[i:i+batch_size].to("cuda", non_blocking=True) # Grab a batch of shape [B, N, H, W, C]
                     batch = batch.view(-1, *batch.shape[2:])  
                     feats = image_encoder.forward_features(batch)
-                    if emb_type == 'patch':
-                        embs = feats['x_norm_patchtokens']  # [B*3, P, 768]
-                    elif emb_type == 'cls':
-                        embs = feats['x_norm_clstoken']     # [B*3, 1, 768] or [B*3, 768]
-                    else:
-                        raise ValueError("Type must be either 'patch' or 'cls'.")
-
-                    if emb_type == 'cls':
-                        embs = embs.view(-1, 3, embs.shape[-1])  # Reshape back to [B, 3, 768]
-                    else:
-                        embs = embs.view(-1, 3 * embs.shape[-2], embs.shape[-1])  # if you keep patches
+                    embs = feats['x_norm_clstoken']
+                    embs = embs.view(-1, self.images.shape[1], embs.shape[-1])  # Reshape back to [B, N, 768]
                     all_embeddings.append(embs.cpu())
-                self.embeddings = torch.cat(all_embeddings, dim=0)  # [total_size, 3, 768]
-            if save:
-                torch.save(self.embeddings, path)    
+                self.embeddings = torch.cat(all_embeddings, dim=0)  # [total_size, N, 768]
+            
+            torch.save(self.embeddings, path)    
         
         return self.embeddings
             
@@ -126,7 +112,7 @@ class CBISDDSMDataset(Dataset):
 
     def __getitem__(self, idx):
         x = self.x[idx]
-        image = self.embeddings[idx//self.batch_size] if hasattr(self, 'embeddings') else None
+        image = self.embeddings[idx] if hasattr(self, 'embeddings') else None
         y = self.y[idx]
 
         return x, image, y

@@ -44,7 +44,7 @@ class SalaryDataset(Dataset):
         df['Y'] = le.fit_transform(df['Y']) # label encoding of target variable
         
         self.y = df['Y'].values
-        self.text = df[text_var].values
+        self.text = df[[text_var]]
         df = df.drop(columns=['Y', text_var])
 
         ordianl_encoder = OrdinalEncoder()
@@ -60,42 +60,39 @@ class SalaryDataset(Dataset):
             print(f"Load embeddings from {path}")
             self.embeddings = torch.load(path)
         else:
-            # Load pretrained DeBERTa-v3 (base version here, can also use small/large)
-            model_name = "microsoft/deberta-v3-base"
-            tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=False)
-            model = AutoModel.from_pretrained(model_name).cuda().eval()
+            local = False
+            # model_name = "microsoft/deberta-v3-base" 
+            # local_dir = ".dataset/deberta"
+            model_name = "google/electra-base-discriminator"
+            local_dir = ".dataset/electra"
+            if 'deberta' in model_name:
+                use_fast = False
+            else:
+                use_fast = True
+            
+            if local:
+                tokenizer = AutoTokenizer.from_pretrained(local_dir, use_fast=use_fast, local_files_only=True)
+                model = AutoModel.from_pretrained(local_dir, local_files_only=True).cuda().eval()
+            else:
+                tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=use_fast)
+                model = AutoModel.from_pretrained(model_name).cuda().eval()
 
             self.embeddings = []
             with torch.no_grad():
-                for text in tqdm(self.text):
-                    inputs = tokenizer(text, return_tensors="pt") # Tokenize and convert to tensors
-                    inputs = {key: value.to('cuda') for key, value in inputs.items()}
-                    with torch.no_grad():
-                        outputs = model(**inputs) # Forward pass
-                    last_hidden_state = outputs.last_hidden_state # outputs.last_hidden_state shape: [batch_size, seq_len, hidden_dim]
-                    self.embeddings.append(last_hidden_state[:, 0, :])  # shape: [batch_size, hidden_dim], CLS token is always at index 0
+                for _, texts in tqdm(self.text.iterrows()):
+                    last_hidden_states = []
+                    for text in texts:
+                        inputs = tokenizer(text, return_tensors='pt', truncation=True, max_length=512)
+                        inputs = {key: value.to('cuda') for key, value in inputs.items()}
+                        outputs = model(**inputs)
+                        last_hidden_state = outputs.last_hidden_state[:, 0, :].detach().cpu()
+                        last_hidden_states.append(last_hidden_state)
+                        del inputs, outputs, last_hidden_state
+                        torch.cuda.empty_cache()
+                    self.embeddings.append(last_hidden_states)
 
-            torch.cuda.empty_cache()
-            print(f"Embeddings shape: {self.embeddings[0].shape}", len(self.embeddings))
-            # Suppose self.embeddings is a list of tensors [B_i, ...] along dim=0
-            sizes = [t.size(0) for t in self.embeddings]
-            total_size = sum(sizes)
-
-            # Preallocate
-            final_shape = (total_size, *self.embeddings[0].shape[1:])
-            out = torch.empty(final_shape, dtype=self.embeddings[0].dtype, device=self.embeddings[0].device)
-
-            # Copy in place
-            offset = 0
-            for t in self.embeddings:
-                out[offset:offset + t.size(0)] = t
-                offset += t.size(0)
-
-            self.embeddings = out
-
-            print(f"Embeddings shape: {self.embeddings.shape}")
-            if save:
-                torch.save(self.embeddings, path)    
+            self.embeddings = torch.stack([torch.stack(inner, dim=0) for inner in self.embeddings], dim=0).squeeze(-2)
+            torch.save(self.embeddings, path)
         
         return self.embeddings
             

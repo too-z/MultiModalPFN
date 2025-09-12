@@ -190,12 +190,13 @@ dist/
 
 *.npy
 
+mmpfn/data/pawpularity
 mmpfn/data/image_embeddings
 mmpfn/data/pad_ufes_20
 mmpfn/data/petfinder_adoption_prediction
-# old_scripts/
 mmpfn/data/cbis_ddsm
 mmpfn/data/ol3i
+
 *.pt
 
-mmpfn/data/pawpularity
+# old_scripts/
