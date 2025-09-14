@@ -289,6 +289,7 @@ class PerFeatureTransformer(nn.Module):
         self.nhid = nhid
         self.init_method = init_method
         self.features_per_group = features_per_group
+        # self.features_per_group = 1
         self.cache_trainset_representation = cache_trainset_representation
         self.cached_embeddings: torch.Tensor | None = None
 
@@ -605,6 +606,7 @@ class PerFeatureTransformer(nn.Module):
                     )
 
             # Splits up the input into subgroups
+            # print("self.features_per_group", self.features_per_group)
             for k in x:
                 x[k] = einops.rearrange(
                     x[k],
@@ -714,7 +716,7 @@ class PerFeatureTransformer(nn.Module):
                 image = self.cqam(image)
             # ed_value = self.energy_distance(embedded_x.reshape(-1, embedded_x.size(-1)), image.reshape(-1, image.size(-1)))
             # print(f"Energy Distance: {ed_value.item()}")
-        
+        # print("embedded_x.shape", embedded_x.shape)
         if x['main'] is None:
             embedded_x = image
         elif image is not None:
@@ -759,6 +761,22 @@ class PerFeatureTransformer(nn.Module):
             half_layers=half_layers,
             cache_trainset_representation=self.cache_trainset_representation,
         )  # b s f+1 e -> b s f+1 e
+        
+        correlation_matrix_avg = np.zeros((encoder_out.shape[-2], encoder_out.shape[-2]))
+        for i in range(encoder_out.shape[-2]):
+            for j in range(encoder_out.shape[-2]):
+                correlation_matrix_avg[i][j] = torch.mm(F.normalize(encoder_out[0,:,j,:], p=2, dim=1), F.normalize(encoder_out[0,:,i,:], p=2, dim=1).T).mean().item()
+        plt.figure(figsize=(16, 8))
+        ax = sns.heatmap(
+            correlation_matrix_avg,
+            annot=False,
+            cmap='coolwarm',
+            xticklabels=[f' feature {i}' for i in range(encoder_out.shape[-2])],
+            yticklabels=[f'feature {i}' for i in range(encoder_out.shape[-2])]
+        )
+        ax.tick_params(axis='x', rotation=45)
+        # plt.title('correlation matrix (average sample similarity)')
+        plt.savefig('correlation_matrix_encoder_out.png', bbox_inches='tight')
 
         # If we are using a decoder
         if self.transformer_decoder:
@@ -938,20 +956,40 @@ class PerFeatureTransformer(nn.Module):
             layer.empty_trainset_representation_cache()
     
     def token_append(self, embedded_x, image) -> torch.Tensor:
-        # correlation_matrix_avg = np.zeros((embedded_x.shape[-2], image.shape[-2]))
+        correlation_matrix_cross = np.zeros((image.shape[-2], embedded_x.shape[-2]))
+        # for i in range(image.shape[-2]):
+        #     for j in range(embedded_x.shape[-2]):
+        #         correlation_matrix_cross[i][j] = torch.mm(F.normalize(embedded_x[0,:,j,:], p=2, dim=1), F.normalize(image[0,:,i,:], p=2, dim=1).T).mean().item()
+        # plt.figure(figsize=(14, 6))
+        # ax = sns.heatmap(
+        #     correlation_matrix_cross,
+        #     annot=False,
+        #     cmap='coolwarm',
+        #     xticklabels=[f'tabular feature {j}' for j in range(embedded_x.shape[-2])],
+        #     yticklabels=[f'image feature {i}' for i in range(image.shape[-2])]
+        # )
+        # cbar = ax.collections[0].colorbar
+        # cbar.ax.tick_params(labelsize=18) # Choose your desired font size
+        # # plt.title('correlation matrix (average sample similarity)')
+        # plt.savefig('correlation_matrix_cross.png', bbox_inches='tight')
+        
+        # correlation_matrix_self = np.zeros((embedded_x.shape[-2], embedded_x.shape[-2]))
         # for i in range(embedded_x.shape[-2]):
-        #     for j in range(image.shape[-2]):
-        #         correlation_matrix_avg[i][j] = torch.mm(F.normalize(embedded_x[0,:,0,:], p=2, dim=1), F.normalize(image[0,:,0,:], p=2, dim=1).T).mean().item()
-        # plt.figure(figsize=(12, 6))
-        # sns.heatmap(
-        #     correlation_matrix_avg,
-        #     annot=True,
+        #     for j in range(embedded_x.shape[-2]):
+        #         correlation_matrix_self[i][j] = torch.mm(F.normalize(embedded_x[0,:,i,:], p=2, dim=1), F.normalize(embedded_x[0,:,j,:], p=2, dim=1).T).mean().item()
+        # plt.figure(figsize=(8, 8))
+        # ax = sns.heatmap(
+        #     correlation_matrix_self,
+        #     annot=False,
         #     cmap='coolwarm',
         #     xticklabels=[f'tabular feature {i}' for i in range(embedded_x.shape[-2])],
-        #     yticklabels=[f'tabular feature {i}' for i in range(image.shape[-2])]
+        #     yticklabels=[f'tabular feature {i}' for i in range(embedded_x.shape[-2])]
         # )
-        # plt.title('correlation matrix (average sample similarity)')
-        # plt.savefig('correlation_matrix.png')
+        # cbar = ax.collections[0].colorbar
+        # cbar.ax.tick_params(labelsize=18) # Choose your desired font size
+        # # plt.title('correlation matrix (average sample similarity)')
+        # plt.savefig('correlation_matrix_self.png', bbox_inches='tight')
+        
         embedded_x = torch.cat((embedded_x, image), dim=-2)
         return embedded_x
     

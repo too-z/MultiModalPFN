@@ -77,10 +77,10 @@ class AirbnbDataset(Dataset):
             
             if local:
                 tokenizer = AutoTokenizer.from_pretrained(local_dir, use_fast=use_fast, local_files_only=True)
-                model = AutoModel.from_pretrained(local_dir, local_files_only=True).cuda().eval()
+                text_encoder = AutoModel.from_pretrained(local_dir, local_files_only=True).cuda().eval()
             else:
                 tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=use_fast)
-                model = AutoModel.from_pretrained(model_name).cuda().eval()
+                text_encoder = AutoModel.from_pretrained(model_name).cuda().eval()
 
             self.embeddings = []
             with torch.no_grad():
@@ -89,7 +89,7 @@ class AirbnbDataset(Dataset):
                     for text in texts:
                         inputs = tokenizer(text, return_tensors='pt', truncation=True, max_length=512)
                         inputs = {key: value.to('cuda') for key, value in inputs.items()}
-                        outputs = model(**inputs)
+                        outputs = text_encoder(**inputs)
                         last_hidden_state = outputs.last_hidden_state[:, 0, :].detach().cpu()
                         last_hidden_states.append(last_hidden_state)
                         del inputs, outputs, last_hidden_state
