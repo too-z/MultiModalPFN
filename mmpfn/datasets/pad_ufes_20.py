@@ -11,6 +11,8 @@ from pathlib import Path
 
 from mmpfn.models.dino_v2.models.vision_transformer import vit_base
 
+from transformers import AutoModel
+
 
 class PADUFES20Dataset(Dataset):
     def __init__(self, data_path):
@@ -69,11 +71,17 @@ class PADUFES20Dataset(Dataset):
             print(f"Load embeddings from {path}")
             self.embeddings = torch.load(path)
         else:
-            image_encoder = vit_base(patch_size=14, img_size=518, init_values=1.0, num_register_tokens=0, block_chunks=0)
-            image_model_path = f"{Path().absolute()}/parameters/dinov2_vitb14_pretrain.pth"
-            image_state_dict = torch.load(image_model_path)
-            image_encoder.load_state_dict(image_state_dict)
-            _ = image_encoder.cuda().eval()
+            local = False
+            if local:
+                image_encoder = vit_base(patch_size=14, img_size=518, init_values=1.0, num_register_tokens=0, block_chunks=0)
+                image_model_path = f"{Path().absolute()}/parameters/dinov2_vitb14_pretrain.pth"
+                image_state_dict = torch.load(image_model_path)
+                image_encoder.load_state_dict(image_state_dict)
+                _ = image_encoder.cuda().eval()
+            else:
+                MODEL_ID = "facebook/dinov3-vitb16-pretrain-lvd1689m"
+                image_encoder = AutoModel.from_pretrained(MODEL_ID).cuda().eval()
+                print("success load DinoV3")
 
             self.embeddings = []
             

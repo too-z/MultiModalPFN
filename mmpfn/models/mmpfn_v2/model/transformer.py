@@ -766,17 +766,17 @@ class PerFeatureTransformer(nn.Module):
         for i in range(encoder_out.shape[-2]):
             for j in range(encoder_out.shape[-2]):
                 correlation_matrix_avg[i][j] = torch.mm(F.normalize(encoder_out[0,:,j,:], p=2, dim=1), F.normalize(encoder_out[0,:,i,:], p=2, dim=1).T).mean().item()
-        plt.figure(figsize=(16, 8))
-        ax = sns.heatmap(
-            correlation_matrix_avg,
-            annot=False,
-            cmap='coolwarm',
-            xticklabels=[f' feature {i}' for i in range(encoder_out.shape[-2])],
-            yticklabels=[f'feature {i}' for i in range(encoder_out.shape[-2])]
-        )
-        ax.tick_params(axis='x', rotation=45)
-        # plt.title('correlation matrix (average sample similarity)')
-        plt.savefig('correlation_matrix_encoder_out.png', bbox_inches='tight')
+        # plt.figure(figsize=(16, 8))
+        # ax = sns.heatmap(
+        #     correlation_matrix_avg,
+        #     annot=False,
+        #     cmap='coolwarm',
+        #     xticklabels=[f' feature {i}' for i in range(encoder_out.shape[-2])],
+        #     yticklabels=[f'feature {i}' for i in range(encoder_out.shape[-2])]
+        # )
+        # ax.tick_params(axis='x', rotation=45)
+        # # plt.title('correlation matrix (average sample similarity)')
+        # plt.savefig('correlation_matrix_encoder_out.png', bbox_inches='tight')
 
         # If we are using a decoder
         if self.transformer_decoder:

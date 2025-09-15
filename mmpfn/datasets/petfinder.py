@@ -136,15 +136,22 @@ class PetfinderDataset(Dataset):
                         #     break
                     torch.cuda.empty_cache()
                     self.embeddings_image = torch.cat(all_image_embeddings, dim=0).cpu()  # [total_size, N, 768]
-            torch.cuda.empty_cache()
-            print("self.embeddings_image.shape", self.embeddings_image.shape)
+                torch.cuda.empty_cache()
+                print("self.embeddings_image.shape", self.embeddings_image.shape)
+                
+                if multimodal_type == 'image':
+                    self.embeddings = self.embeddings_image
+                    print("self.embeddings", self.embeddings.shape)
+                    torch.cuda.empty_cache()
+                    torch.save(self.embeddings, path)       
+                    return self.embeddings
                 
             if multimodal_type == 'text' or multimodal_type == 'all':
                 local_text = False
                 # model_name = "microsoft/deberta-v3-base" 
-                # local_dir = ".dataset/deberta"
+                # local_dir = "datasets/deberta"
                 model_name = "google/electra-base-discriminator"
-                local_dir = ".dataset/electra"
+                local_dir = "datasets/electra"
                 if 'deberta' in model_name:
                     use_fast = False
                 else:
@@ -172,10 +179,18 @@ class PetfinderDataset(Dataset):
                         self.embeddings_text.append(last_hidden_states)
                         # if i > 10:
                         #     break
-            torch.cuda.empty_cache()
-            self.embeddings_text = torch.stack([torch.stack(inner, dim=0) for inner in self.embeddings_text], dim=0).squeeze(-2).cpu()
-            torch.cuda.empty_cache()
-            print("self.embeddings_text", self.embeddings_text.shape)
+                torch.cuda.empty_cache()
+                self.embeddings_text = torch.stack([torch.stack(inner, dim=0) for inner in self.embeddings_text], dim=0).squeeze(-2).cpu()
+                torch.cuda.empty_cache()
+                print("self.embeddings_text", self.embeddings_text.shape)
+                
+                if multimodal_type == 'text':
+                    self.embeddings = self.embeddings_text
+                    print("self.embeddings", self.embeddings.shape)
+                    torch.cuda.empty_cache()
+                    torch.save(self.embeddings, path)       
+                    return self.embeddings
+                
             self.embeddings = torch.cat((self.embeddings_image, self.embeddings_text), dim=-2)
             print("self.embeddings", self.embeddings.shape)
             torch.cuda.empty_cache()
