@@ -11,6 +11,8 @@ from pathlib import Path
 
 from mmpfn.models.dino_v2.models.vision_transformer import vit_base
 
+from transformers import AutoTokenizer, AutoModel
+
 
 class CBISDDSMDataset(Dataset):
     def __init__(self, data_path, data_name, kind, image_type):
@@ -77,17 +79,26 @@ class CBISDDSMDataset(Dataset):
         
     def get_embeddings(self, batch_size=16, mode='train'):
         
+        # model_name = 'dinov2'
+        # model_name = 'dinov3'
+        
+        # path = f'embeddings/cbis_ddsm/{self.kind}_{mode}_{self.image_type}_{model_name}.pt'
         path = f'embeddings/cbis_ddsm/{self.kind}_{mode}_{self.image_type}.pt'
 
         if os.path.exists(path):
             print(f"Load embeddings from {path}")
             self.embeddings = torch.load(path)
         else:
-            image_encoder = vit_base(patch_size=14, img_size=518, init_values=1.0, num_register_tokens=0, block_chunks=0)
-            image_model_path = f"{Path().absolute()}/parameters/dinov2_vitb14_pretrain.pth"
-            image_state_dict = torch.load(image_model_path)
-            image_encoder.load_state_dict(image_state_dict)
-            _ = image_encoder.cuda().eval()
+            local_image = True
+            if local_image:
+                image_encoder = vit_base(patch_size=14, img_size=518, init_values=1.0, num_register_tokens=0, block_chunks=0)
+                image_model_path = f"{Path().absolute()}/parameters/dinov2_vitb14_pretrain.pth"
+                image_state_dict = torch.load(image_model_path)
+                image_encoder.load_state_dict(image_state_dict)
+                _ = image_encoder.cuda().eval()
+            else:
+                MODEL_ID = "facebook/dinov3-vitb16-pretrain-lvd1689m"
+                image_encoder = AutoModel.from_pretrained(MODEL_ID).cuda().eval()
 
             self.embeddings = []
             
@@ -96,8 +107,12 @@ class CBISDDSMDataset(Dataset):
                 for i in range(0, self.images.shape[0], batch_size):
                     batch = self.images[i:i+batch_size].to("cuda", non_blocking=True) # Grab a batch of shape [B, N, H, W, C]
                     batch = batch.view(-1, *batch.shape[2:])  
-                    feats = image_encoder.forward_features(batch)
-                    embs = feats['x_norm_clstoken']
+                    if local_image:
+                        feats = image_encoder.forward_features(batch)
+                        embs = feats['x_norm_clstoken']
+                    else:
+                        feats = image_encoder(batch)
+                        embs = feats['last_hidden_state'][:,0,:]
                     embs = embs.view(-1, self.images.shape[1], embs.shape[-1])  # Reshape back to [B, N, 768]
                     all_embeddings.append(embs.cpu())
                 self.embeddings = torch.cat(all_embeddings, dim=0)  # [total_size, N, 768]

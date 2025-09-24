@@ -65,7 +65,9 @@ class PADUFES20Dataset(Dataset):
         
     def get_embeddings(self, batch_size=16):
         
-        path = f'embeddings/pad_ufes_20/pad_ufes_20.pt'
+        # model_name = 'dinov2'
+        model_name = 'dinov3'
+        path = f'embeddings/pad_ufes_20/pad_ufes_20_{model_name}.pt'
 
         if os.path.exists(path):
             print(f"Load embeddings from {path}")
@@ -81,7 +83,6 @@ class PADUFES20Dataset(Dataset):
             else:
                 MODEL_ID = "facebook/dinov3-vitb16-pretrain-lvd1689m"
                 image_encoder = AutoModel.from_pretrained(MODEL_ID).cuda().eval()
-                print("success load DinoV3")
 
             self.embeddings = []
             
@@ -90,8 +91,13 @@ class PADUFES20Dataset(Dataset):
                 for i in range(0, self.images.shape[0], batch_size):
                     batch = self.images[i:i+batch_size].to("cuda", non_blocking=True) # Grab a batch of shape [B, N, H, W, C]
                     batch = batch.view(-1, *batch.shape[2:])  
-                    feats = image_encoder.forward_features(batch)
-                    embs = feats['x_norm_clstoken']
+                    
+                    # feats = image_encoder.forward_features(batch)
+                    # embs = feats['x_norm_clstoken']
+                    
+                    feats = image_encoder(batch)
+                    embs = feats['last_hidden_state'][:,0,:]
+                    
                     embs = embs.view(-1, self.images.shape[1], embs.shape[-1])  # Reshape back to [B, N, 768]
                     all_embeddings.append(embs.cpu())
                 self.embeddings = torch.cat(all_embeddings, dim=0)  # [total_size, N, 768]
