@@ -200,3 +200,4 @@ mmpfn/data/ol3i
 *.pt
 
 # old_scripts/
+mmpfn/catboost_info/
