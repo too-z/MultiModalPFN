@@ -1,5 +1,8 @@
 # Multi-Modal PFN (Prior-data Fitted Network)
 
+---
+![Crates.io](https://img.shields.io/crates/I/Ap?color=orange)
+
 ## 🚦 Getting started
 Install
 ```
