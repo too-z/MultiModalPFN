@@ -1,5 +1,7 @@
 # Multi-Modal PFN (Prior-data Fitted Network)
 
+![Crates.io](https://img.shields.io/crates/l/Ap?color=orange)
+
 ## 🧭 Introduction
 
 **MMPFN** is an extension of **TabPFN**, designed to handle **multimodal data** — combining tabular, image, and text inputs in a unified learning framework. While TabPFN has shown strong performance on purely tabular datasets, it lacks the ability to integrate heterogeneous modalities.
