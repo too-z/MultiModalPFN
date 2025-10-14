@@ -12,9 +12,9 @@ import numpy as np
 import pandas as pd
 
 from sklearn.metrics import accuracy_score
-from mmpfn.models.mmpfn_v2 import MMPFNClassifier
-from mmpfn.models.mmpfn_v2.constants import ModelInterfaceConfig
-from mmpfn.models.mmpfn_v2.preprocessing import PreprocessorConfig
+from mmpfn.models.mmpfn import MMPFNClassifier
+from mmpfn.models.mmpfn.constants import ModelInterfaceConfig
+from mmpfn.models.mmpfn.preprocessing import PreprocessorConfig
 from mmpfn.scripts_finetune_mm.finetune_mmpfn_main import fine_tune_mmpfn
 
 import optuna

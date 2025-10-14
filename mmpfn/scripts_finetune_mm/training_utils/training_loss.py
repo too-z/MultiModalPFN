@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 import torch
 from mmpfn.scripts_finetune_mm.constant_utils import TaskType
-from mmpfn.models.mmpfn_v2.model.bar_distribution import FullSupportBarDistribution
+from mmpfn.models.mmpfn.model.bar_distribution import FullSupportBarDistribution
 
 if TYPE_CHECKING:
     from torch.nn.modules.loss import _Loss

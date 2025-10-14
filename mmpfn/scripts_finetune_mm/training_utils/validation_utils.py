@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     import numpy as np
     import pandas as pd
     from mmpfn.scripts_finetune_mm.metric_utils.ag_metrics import Scorer
-    from mmpfn.models.mmpfn_v2.model.transformer import PerFeatureTransformer
+    from mmpfn.models.mmpfn.model.transformer import PerFeatureTransformer
 
 
 def create_val_data(

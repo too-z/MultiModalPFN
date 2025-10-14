@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 import torch
 if TYPE_CHECKING:
-    from mmpfn.models.mmpfn_v2.model.transformer import PerFeatureTransformer
+    from mmpfn.models.mmpfn.model.transformer import PerFeatureTransformer
 
 
 def save_model(

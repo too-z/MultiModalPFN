@@ -27,14 +27,14 @@ from mmpfn.scripts_finetune_mm.training_utils.data_utils import get_data_loader
 from mmpfn.scripts_finetune_mm.training_utils.training_loss import compute_loss, get_loss
 from mmpfn.scripts_finetune_mm.training_utils.validation_utils import validate_tabpfn
 from schedulefree import AdamWScheduleFree
-from mmpfn.models.mmpfn_v2.base import load_model_criterion_config
+from mmpfn.models.mmpfn.base import load_model_criterion_config
 from torch import autocast
 from torch.cuda.amp import GradScaler
 from torch.nn import DataParallel
 from tqdm import tqdm
 
 if TYPE_CHECKING:
-    from mmpfn.models.mmpfn_v2.model.transformer import PerFeatureTransformer
+    from mmpfn.models.mmpfn.model.transformer import PerFeatureTransformer
     from torch.nn.modules.loss import _Loss
     from torch.optim.optimizer import Optimizer
 
