@@ -201,3 +201,6 @@ mmpfn/data/ol3i
 
 # old_scripts/
 mmpfn/catboost_info/
+
+*.lnk
+*.symlink
