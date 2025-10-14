@@ -7,16 +7,17 @@ Install
 python setup.py develop
 ```
 
-python 3.10
+Place the checkpoint file and dataset in their respective locations, then update the model_path as shown below:
 
-### Usage
-
-You need to place a checkpoint file and modify the model_path like below
 ```
+ln -s /path/to/model/params # symlink parameter
+ln -s /path/to/data # symlink data
+
 model_path = Path(__file__).parent/ "parameters" / "tabpfn-v2-classifier.ckpt"
 ```
 
 ## License
+This project follows the original TabPFN license policy.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
