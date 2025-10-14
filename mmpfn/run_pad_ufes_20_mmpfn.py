@@ -22,7 +22,7 @@ import optuna
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
-# data_path = os.path.join(os.getenv('HOME'), "workspace/works/tabular_image/MultiModalPFN/mmpfn/data/pad_ufes_20")
+# data_path = os.path.join(os.getenv('HOME'), "workspace/research/MultiModalPFN/mmpfn/data/pad_ufes_20")
 data_path = os.path.join(os.getenv('HOME'), "works/research/MultiModalPFN/mmpfn/data/pad_ufes_20")
 dataset = PADUFES20Dataset(data_path)
 # _ = dataset.get_images()
