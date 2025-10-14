@@ -115,6 +115,7 @@ class MMPFNClassifier(ClassifierMixin, BaseEstimator):
         mixer_type: str,
         mgm_heads: int,
         cap_heads: int,
+        features_per_group: int,
         n_estimators: int = 4,
         categorical_features_indices: Sequence[int] | None = None,
         softmax_temperature: float = 0.9,
@@ -345,6 +346,7 @@ class MMPFNClassifier(ClassifierMixin, BaseEstimator):
         self.mixer_type = mixer_type
         self.mgm_heads = mgm_heads
         self.cap_heads = cap_heads
+        self.features_per_group = features_per_group
 
     # TODO: We can remove this from scikit-learn lower bound of 1.6
     def _more_tags(self) -> dict[str, Any]:
@@ -377,6 +379,7 @@ class MMPFNClassifier(ClassifierMixin, BaseEstimator):
             mixer_type=self.mixer_type,
             mgm_heads = self.mgm_heads,
             cap_heads = self.cap_heads,
+            features_per_group = self.features_per_group,
         )
 
         # Determine device and precision

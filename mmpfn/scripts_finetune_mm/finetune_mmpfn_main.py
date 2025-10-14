@@ -80,6 +80,7 @@ def fine_tune_mmpfn(
     mixer_type:str,
     mgm_heads:int,
     cap_heads:int,
+    features_per_group:int,
     path_to_base_model: Path | Literal["auto"] = "auto",
     save_path_to_fine_tuned_model: Path,
     # Finetuning HPs
@@ -190,6 +191,7 @@ def fine_tune_mmpfn(
         mixer_type=mixer_type,
         mgm_heads = mgm_heads,
         cap_heads = cap_heads,
+        features_per_group = features_per_group,
     )
     model.criterion = criterion
     checkpoint_config = checkpoint_config.__dict__

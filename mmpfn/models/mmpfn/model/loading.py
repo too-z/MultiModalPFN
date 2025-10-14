@@ -405,6 +405,7 @@ def load_model(
     mixer_type: str,
     mgm_heads: int,
     cap_heads: int,
+    features_per_group: int,
 ) -> tuple[
     PerFeatureTransformer,
     nn.BCEWithLogitsLoss | nn.CrossEntropyLoss | FullSupportBarDistribution,
@@ -492,7 +493,7 @@ def load_model(
         ninp=config.emsize,
         nhid=config.emsize * config.nhid_factor,
         nlayers=config.nlayers,
-        features_per_group=config.features_per_group,
+        features_per_group=features_per_group,
         cache_trainset_representation=True,
         #
         # Based on not being present in config or otherwise, these were default values

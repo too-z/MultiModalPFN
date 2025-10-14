@@ -64,6 +64,7 @@ def initialize_mmpfn_model(
     mixer_type: str,
     mgm_heads: int,
     cap_heads: int,
+    features_per_group: int,
 ) -> tuple[PerFeatureTransformer, InferenceConfig, FullSupportBarDistribution | None]:
     """Common logic to load the TabPFN model, set up the random state,
     and optionally download the model.
@@ -99,6 +100,7 @@ def initialize_mmpfn_model(
             mixer_type=mixer_type,
             mgm_heads = mgm_heads,
             cap_heads = cap_heads,
+            features_per_group = features_per_group,
         )
         bar_distribution = None
     else:
@@ -114,6 +116,7 @@ def initialize_mmpfn_model(
             mixer_type=mixer_type,
             mgm_heads = mgm_heads,
             cap_heads = cap_heads,
+            features_per_group = features_per_group,
         )
         bar_distribution = bardist
 

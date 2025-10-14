@@ -33,6 +33,7 @@ def objective(trial):
     
     mgm_heads = trial.suggest_categorical("mgm_heads", [2, 4, 8, 16, 32, 64, 128])
     cap_heads = trial.suggest_categorical("cap_heads", [2, 4, 8, 12])
+    features_per_group = trial.suggest_categorical("features_per_group", [1, 2])
 
     accuracy_scores = []
     for seed in range(5):
@@ -81,6 +82,7 @@ def objective(trial):
             mixer_type='MGM+CAP', # MGM MGM+CAP
             mgm_heads=mgm_heads,
             cap_heads=cap_heads,
+            features_per_group=features_per_group,
         )
 
         # disables preprocessing at inference time to match fine-tuning
@@ -97,6 +99,7 @@ def objective(trial):
             mixer_type='MGM+CAP', # MGM MGM+CAP
             mgm_heads=mgm_heads,
             cap_heads=cap_heads,
+            features_per_group=features_per_group,
         )
 
         clf_finetuned = model_finetuned.fit(X_train, image_train, y_train)

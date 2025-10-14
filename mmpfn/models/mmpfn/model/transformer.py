@@ -288,8 +288,7 @@ class PerFeatureTransformer(nn.Module):
         self.nhead = nhead
         self.nhid = nhid
         self.init_method = init_method
-        # self.features_per_group = features_per_group
-        self.features_per_group = 1
+        self.features_per_group = features_per_group
         self.cache_trainset_representation = cache_trainset_representation
         self.cached_embeddings: torch.Tensor | None = None
 

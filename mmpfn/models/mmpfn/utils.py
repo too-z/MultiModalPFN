@@ -280,6 +280,7 @@ def load_model_criterion_config(
     mixer_type: str,
     mgm_heads: int,
     cap_heads: int,
+    features_per_group: int,
 ) -> tuple[
     PerFeatureTransformer,
     nn.BCEWithLogitsLoss | nn.CrossEntropyLoss | FullSupportBarDistribution,
@@ -353,6 +354,7 @@ def load_model_criterion_config(
         mixer_type=mixer_type,
         mgm_heads = mgm_heads,
         cap_heads = cap_heads,
+        features_per_group = features_per_group,
     )
     loaded_model.cache_trainset_representation = cache_trainset_representation
     if check_bar_distribution_criterion and not isinstance(
