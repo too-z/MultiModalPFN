@@ -32,7 +32,7 @@ _ = dataset.get_embeddings()
 def objective(trial):
     
     mgm_heads = trial.suggest_categorical("mgm_heads", [2, 4, 8, 16, 32, 64, 128])
-    cqam_heads = trial.suggest_categorical("cqam_heads", [2, 4, 8, 12])
+    cap_heads = trial.suggest_categorical("cap_heads", [2, 4, 8, 12])
 
     accuracy_scores = []
     for seed in range(5):
@@ -78,9 +78,9 @@ def objective(trial):
             show_training_curve=False,  # Shows a final report after finetuning.
             logger_level=0,  # Shows all logs, higher values shows less
             freeze_input=True,  # Freeze the input layers (encoder and y_encoder) during finetuning
-            mixer_type='MGM+CQAM', # MGM MGM+CQAM
+            mixer_type='MGM+CAP', # MGM MGM+CAP
             mgm_heads=mgm_heads,
-            cqam_heads=cqam_heads,
+            cap_heads=cap_heads,
         )
 
         # disables preprocessing at inference time to match fine-tuning
@@ -94,9 +94,9 @@ def objective(trial):
             model_path=save_path_to_fine_tuned_model,
             inference_config=no_preprocessing_inference_config, 
             ignore_pretraining_limits=True,
-            mixer_type='MGM+CQAM', # MGM MGM+CQAM
+            mixer_type='MGM+CAP', # MGM MGM+CAP
             mgm_heads=mgm_heads,
-            cqam_heads=cqam_heads,
+            cap_heads=cap_heads,
         )
 
         clf_finetuned = model_finetuned.fit(X_train, image_train, y_train)

@@ -153,7 +153,7 @@ class MMPFNRegressor(RegressorMixin, BaseEstimator):
         *,
         mixer_type: str,
         mgm_heads: int,
-        cqam_heads: int,
+        cap_heads: int,
         n_estimators: int = 8,
         categorical_features_indices: Sequence[int] | None = None,
         softmax_temperature: float = 0.9,
@@ -371,7 +371,7 @@ class MMPFNRegressor(RegressorMixin, BaseEstimator):
         self.inference_config = inference_config
         self.mixer_type = mixer_type
         self.mgm_heads = mgm_heads
-        self.cqam_heads = cqam_heads
+        self.cap_heads = cap_heads
 
     # TODO: We can remove this from scikit-learn lower bound of 1.6
     def _more_tags(self) -> dict[str, Any]:
@@ -405,7 +405,7 @@ class MMPFNRegressor(RegressorMixin, BaseEstimator):
             static_seed=static_seed,
             mixer_type=self.mixer_type,
             mgm_heads = self.mgm_heads,
-            cqam_heads = self.cqam_heads,
+            cap_heads = self.cap_heads,
         )
 
         # Determine device and precision

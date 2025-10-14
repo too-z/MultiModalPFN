@@ -57,13 +57,13 @@ class MultiheadGatedMLP(nn.Module):
         return loss
     
 
-class CrossQueryAttentionMerger(nn.Module):
-    def __init__(self, src_dim=192, cqam_heads=8, dropout=0.1):
+class CrossAttentionPooler(nn.Module):
+    def __init__(self, src_dim=192, cap_heads=8, dropout=0.1):
         super().__init__()
 
-        self.queries = nn.Parameter(torch.randn(cqam_heads, src_dim) * 1e-2)
+        self.queries = nn.Parameter(torch.randn(cap_heads, src_dim) * 1e-2)
         self.q_proj = nn.Linear(src_dim, src_dim, bias=False)
-        self.mha = nn.MultiheadAttention(src_dim, cqam_heads, kdim=src_dim, vdim=src_dim, dropout=dropout, batch_first=False)
+        self.mha = nn.MultiheadAttention(src_dim, cap_heads, kdim=src_dim, vdim=src_dim, dropout=dropout, batch_first=False)
         self.k_norm = nn.LayerNorm(src_dim)
         self.q_norm = nn.LayerNorm(src_dim)
         self.out_norm = nn.LayerNorm(src_dim)
@@ -156,8 +156,8 @@ class PerFeatureTransformer(nn.Module):
         self,
         *,
         mgm_heads:int, # 1 8 128 
-        cqam_heads:int=None, # 8 32
-        mixer_type = "MGM+CQAM", 
+        cap_heads:int=None, # 8 32
+        mixer_type = "MGM+CAP", 
         encoder_dropout = 0.1,
         encoder: nn.Module | None = None,
         ninp: int = DEFAULT_EMSIZE,
@@ -253,9 +253,9 @@ class PerFeatureTransformer(nn.Module):
         
         if mixer_type == "MGM":
             self.mgm = MultiheadGatedMLP(in_dim=nhid, out_dim=ninp, mgm_heads=mgm_heads, dropout=encoder_dropout)
-        elif mixer_type == "MGM+CQAM":
+        elif mixer_type == "MGM+CAP":
             self.mgm = MultiheadGatedMLP(in_dim=nhid, out_dim=ninp, mgm_heads=mgm_heads, dropout=encoder_dropout)
-            self.cqam = CrossQueryAttentionMerger(src_dim = ninp, cqam_heads=cqam_heads, dropout =encoder_dropout)
+            self.cap = CrossAttentionPooler(src_dim = ninp, cap_heads=cap_heads, dropout =encoder_dropout)
         
         if encoder is None:
             encoder = SequentialEncoder(
@@ -712,8 +712,8 @@ class PerFeatureTransformer(nn.Module):
         
         if image is not None:
             image = self.mgm(image)
-            if self.mixer_type == "MGM+CQAM":
-                image = self.cqam(image)
+            if self.mixer_type == "MGM+CAP":
+                image = self.cap(image)
             # ed_value = self.energy_distance(embedded_x.reshape(-1, embedded_x.size(-1)), image.reshape(-1, image.size(-1)))
             # print(f"Energy Distance: {ed_value.item()}")
         # print("embedded_x.shape", embedded_x.shape)

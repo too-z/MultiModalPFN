@@ -404,7 +404,7 @@ def load_model(
     model_seed: int,
     mixer_type: str,
     mgm_heads: int,
-    cqam_heads: int,
+    cap_heads: int,
 ) -> tuple[
     PerFeatureTransformer,
     nn.BCEWithLogitsLoss | nn.CrossEntropyLoss | FullSupportBarDistribution,
@@ -533,7 +533,7 @@ def load_model(
         ),
         mixer_type=mixer_type,
         mgm_heads = mgm_heads,
-        cqam_heads = cqam_heads,
+        cap_heads = cap_heads,
     )
 
     model.load_state_dict(state_dict, strict=False)
