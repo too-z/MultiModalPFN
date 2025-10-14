@@ -9,9 +9,15 @@
 Comprehensive experiments on datasets show that MMPFN **outperforms state-of-the-art baselines**, efficiently leveraging diverse data types to enhance predictive performance. This demonstrates the potential of extending **prior-data fitted networks** into the multimodal domain, offering a scalable and effective solution for heterogeneous data learning.
 
 ## ⚙️ Set-up
+
+Conda Environment
+```
+conda env create -f environment.yaml
+```
+
 Install
 ```
-python setup.py develop
+python setup.py install
 ```
 
 Place the checkpoint file and dataset in their respective locations, then update the model_path as shown below:
