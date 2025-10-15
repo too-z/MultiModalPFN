@@ -22,18 +22,20 @@ import optuna
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
-# data_path = os.path.join(os.getenv('HOME'), "workspace/research/MultiModalPFN/mmpfn/data/pad_ufes_20")
-data_path = os.path.join(os.getenv('HOME'), "works/research/MultiModalPFN/mmpfn/data/pad_ufes_20")
+data_path = os.path.join(os.getenv('HOME'), "workspace/research/MultiModalPFN/mmpfn/data/pad_ufes_20")
 dataset = PADUFES20Dataset(data_path)
-# _ = dataset.get_images()
+_ = dataset.get_images()
 _ = dataset.get_embeddings()
 
+mgm_heads_list = [2, 4, 8, 16, 32, 64, 128]
+cap_heads_list = [2, 4, 8, 12]
+features_per_group_list = [1, 2]
 
 def objective(trial):
     
-    mgm_heads = trial.suggest_categorical("mgm_heads", [2, 4, 8, 16, 32, 64, 128])
-    cap_heads = trial.suggest_categorical("cap_heads", [2, 4, 8, 12])
-    features_per_group = trial.suggest_categorical("features_per_group", [1, 2])
+    mgm_heads = trial.suggest_categorical("mgm_heads", mgm_heads_list)
+    cap_heads = trial.suggest_categorical("cap_heads", cap_heads_list)
+    features_per_group = trial.suggest_categorical("features_per_group", features_per_group_list)
 
     accuracy_scores = []
     for seed in range(5):
@@ -116,8 +118,17 @@ def objective(trial):
     return mean_accuracy
 
 
-study = optuna.create_study(direction="maximize")
-study.optimize(objective, n_trials=20)
+# study = optuna.create_study(direction="maximize")
+# study.optimize(objective, n_trials=20)
+study = optuna.create_study(
+    sampler=optuna.samplers.GridSampler({
+        'mgm_heads': mgm_heads_list,
+        'cap_heads': cap_heads_list,
+        'features_per_group': features_per_group_list,
+    }),
+    direction="maximize"
+)
+study.optimize(objective, n_trials=len(mgm_heads_list) * len(cap_heads_list) * len(features_per_group_list))
 
 # Print results
 print("Best parameters:", study.best_params)
