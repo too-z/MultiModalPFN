@@ -1,6 +1,7 @@
 # Multi-Modal PFN (Prior-data Fitted Network)
 
 ![Crates.io](https://img.shields.io/crates/l/Ap?color=orange)
+![Contributions Welcome](https://img.shields.io/badge/contributions-welcome-brightgreen)
 
 ## 🧭 Introduction
 
