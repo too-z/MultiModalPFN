@@ -25,27 +25,27 @@ class CBISDDSMDataset(Dataset):
         # print(self.df[['image file path', 'cropped image file path', 'ROI mask file path']].isna().sum())
         
         if self.kind == 'mass':
-            self.cat_cols = ['left or right breast', 'image view', 'abnormality id', 'mass shape', 'mass margins']
-            self.numeric_cols = ['breast_density', 'assessment', 'subtlety']
+            self.cat_features = ['left or right breast', 'image view', 'abnormality id', 'mass shape', 'mass margins']
+            self.num_features = ['breast_density', 'assessment', 'subtlety']
         elif self.kind == 'calc':
-            self.cat_cols = ['left or right breast', 'image view', 'abnormality id', 'calc type', 'calc distribution']
-            self.numeric_cols = ['breast density', 'assessment', 'subtlety']
+            self.cat_features = ['left or right breast', 'image view', 'abnormality id', 'calc type', 'calc distribution']
+            self.num_features = ['breast density', 'assessment', 'subtlety']
             
         if self.image_type == 'full':
-            self.image_cols = ['image file path']
+            self.image_features = ['image file path']
         elif self.image_type == 'crop':
-            self.image_cols = ['cropped image file path']
+            self.image_features = ['cropped image file path']
         elif self.image_type == 'ROI':
-            self.image_cols = ['ROI mask file path']
+            self.image_features = ['ROI mask file path']
         elif self.image_type == 'all':
-            self.image_cols = ['image file path', 'cropped image file path', 'ROI mask file path']
+            self.image_features = ['image file path', 'cropped image file path', 'ROI mask file path']
             
         # col_unused = ['patient_id', 'abnormality type']
         self.target_col = 'pathology'
 
         self.encoder = OrdinalEncoder()
-        self.x = self.encoder.fit_transform(self.df[self.cat_cols])
-        self.x = pd.concat([pd.DataFrame(self.x, columns=self.cat_cols), self.df[self.numeric_cols]], axis=1).values
+        self.x = self.encoder.fit_transform(self.df[self.cat_features])
+        self.x = pd.concat([pd.DataFrame(self.x, columns=self.cat_features), self.df[self.num_features]], axis=1).values
         
         self.target_encoder = LabelEncoder()
         self.df[self.target_col] = self.df[self.target_col].replace('BENIGN_WITHOUT_CALLBACK', 'BENIGN')
@@ -56,7 +56,7 @@ class CBISDDSMDataset(Dataset):
                 
         self.images = []
         
-        for _, paths in self.df[self.image_cols].iterrows():
+        for _, paths in self.df[self.image_features].iterrows():
             image_set = []
             for path in paths:
                 image_path = os.path.join(self.data_path, 'jpeg', path.split('/')[-2])

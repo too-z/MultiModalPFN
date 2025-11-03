@@ -24,15 +24,15 @@ class PADUFES20Dataset(Dataset):
         # Define categorical column names explicitly
         self.bool_cats = ['smoke', 'drink', 'pesticide', 'skin_cancer_history', 'cancer_history','has_piped_water', 'has_sewage_system', 'itch', 'grew', 'hurt','bleed', 'elevation', 'biopsed', 'changed']
         self.string_cats = ['background_father', 'background_mother', 'gender', 'region']
-        self.numeric_cols = ['age', 'diameter_1', 'diameter_2']
-        self.image_cols = ['img_id']
+        self.num_features = ['age', 'diameter_1', 'diameter_2']
+        self.image_features = ['img_id']
         self.target_col = 'diagnostic'
         # self.drop_cols = ['patient_id', 'lesion_id', 'img_id']
-        self.cat_cols = self.bool_cats + self.string_cats
+        self.cat_features = self.bool_cats + self.string_cats
 
         self.encoder = OrdinalEncoder()
-        self.x = self.encoder.fit_transform(self.df[self.cat_cols])
-        self.x = pd.concat([pd.DataFrame(self.x, columns=self.cat_cols), self.df[self.numeric_cols]], axis=1).values
+        self.x = self.encoder.fit_transform(self.df[self.cat_features])
+        self.x = pd.concat([pd.DataFrame(self.x, columns=self.cat_features), self.df[self.num_features]], axis=1).values
         
         self.target_encoder = LabelEncoder()
         self.y = self.target_encoder.fit_transform(self.df[self.target_col])
@@ -42,7 +42,7 @@ class PADUFES20Dataset(Dataset):
         
         self.images = []
         
-        for _, paths in self.df[self.image_cols].iterrows():
+        for _, paths in self.df[self.image_features].iterrows():
             image_set = []
             for path in paths:
                 image_path = os.path.join(self.data_path, 'imgs', path)
@@ -65,15 +65,15 @@ class PADUFES20Dataset(Dataset):
         
     def get_embeddings(self, batch_size=16):
         
-        # model_name = 'dinov2'
-        model_name = 'dinov3'
+        model_name = 'dinov2'
+        # model_name = 'dinov3'
         path = f'embeddings/pad_ufes_20/pad_ufes_20_{model_name}.pt'
 
         if os.path.exists(path):
             print(f"Load embeddings from {path}")
             self.embeddings = torch.load(path)
         else:
-            local = False
+            local = True
             if local:
                 image_encoder = vit_base(patch_size=14, img_size=518, init_values=1.0, num_register_tokens=0, block_chunks=0)
                 image_model_path = f"{Path().absolute()}/parameters/dinov2_vitb14_pretrain.pth"
@@ -92,11 +92,11 @@ class PADUFES20Dataset(Dataset):
                     batch = self.images[i:i+batch_size].to("cuda", non_blocking=True) # Grab a batch of shape [B, N, H, W, C]
                     batch = batch.view(-1, *batch.shape[2:])  
                     
-                    # feats = image_encoder.forward_features(batch)
-                    # embs = feats['x_norm_clstoken']
+                    feats = image_encoder.forward_features(batch)
+                    embs = feats['x_norm_clstoken']
                     
-                    feats = image_encoder(batch)
-                    embs = feats['last_hidden_state'][:,0,:]
+                    # feats = image_encoder(batch)
+                    # embs = feats['last_hidden_state'][:,0,:]
                     
                     embs = embs.view(-1, self.images.shape[1], embs.shape[-1])  # Reshape back to [B, N, 768]
                     all_embeddings.append(embs.cpu())

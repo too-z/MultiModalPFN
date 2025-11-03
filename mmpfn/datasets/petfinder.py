@@ -32,11 +32,10 @@ class PetfinderDataset(Dataset):
                 
         col_features = ["Breed1","Breed2","Color1","Color2","Color3","Dewormed","FurLength","Gender","Health","MaturitySize","State","Sterilized","Type","Vaccinated","Age","VideoAmt","Quantity","PhotoAmt","Fee",]
         col_exclude = ["PetID", "RescureID", "Name"]
-        col_texts = ["Description"]
+        text_features = ["Description"]
         col_target = "AdoptionSpeed"
-        cat_features = ["Breed1","Breed2","Color1","Color2","Color3","Dewormed","FurLength","Gender","Health","MaturitySize","State","Sterilized","Type","Vaccinated",]
-        num_features = list(set(col_features) - set(cat_features))
-        cat_features_index = [col_features.index(feature) for feature in cat_features]
+        self.cat_features = ["Breed1","Breed2","Color1","Color2","Color3","Dewormed","FurLength","Gender","Health","MaturitySize","State","Sterilized","Type","Vaccinated",]
+        num_features = list(set(col_features) - set(self.cat_features))
         
         table_path = os.path.join(data_path, "train/train.csv")
         images = [f for f in os.listdir(os.path.join(data_path, "train_images")) if f.endswith(".jpg")]
@@ -53,13 +52,13 @@ class PetfinderDataset(Dataset):
         )
         image_df = image_df[image_df["ImageNumber"] == "1"]
         
-        self.image_cols = "ImagePath"
+        self.image_features = "ImagePath"
         self.df = self.df.merge(image_df, on="PetID", how="left")
         self.df = self.df[self.df["ImageNumber"].notna()]
-        self.df[self.image_cols] = self.df["PetID"] + "-1.jpg"
-        self.df = self.df[self.df[self.image_cols].notna()]
+        self.df[self.image_features] = self.df["PetID"] + "-1.jpg"
+        self.df = self.df[self.df[self.image_features].notna()]
         
-        self.text = self.df[col_texts]
+        self.text = self.df[text_features]
         self.text.loc[self.text["Description"].isnull(),"Description"] = ''
         
         self.target_encoder = LabelEncoder()
@@ -67,14 +66,14 @@ class PetfinderDataset(Dataset):
         
         # self.x = torch.from_numpy(self.df[col_features].values).float()
         self.encoder = OrdinalEncoder()
-        self.x = self.encoder.fit_transform(self.df[cat_features])
-        self.x = pd.concat([pd.DataFrame(self.x, columns=cat_features), self.df[num_features]], axis=1).values
+        self.x = self.encoder.fit_transform(self.df[self.cat_features])
+        self.x = pd.concat([pd.DataFrame(self.x, columns=self.cat_features), self.df[num_features]], axis=1).values
         
     def get_images(self, img_size=14*24):
         # image size must be a multiple of 14
         self.images = []
         
-        for i, paths in self.df[[self.image_cols]].iterrows():
+        for i, paths in self.df[[self.image_features]].iterrows():
             image_set = []
             for path in paths:
                 image_path = os.path.join(self.data_path, 'train_images', path)

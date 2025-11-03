@@ -21,35 +21,32 @@ class SalaryDataset(Dataset):
         self.data_path = data_path
         
         FILENAME = 'train.csv'
-        categorical_var = ['location', 'company_name_encoded', 'job_type']
-        numerical_var = ['experience_int']
-        text_var = 'description'
+        self.cat_features = ['location', 'company_name_encoded', 'job_type']
+        num_features = ['experience_int']
+        text_features = 'description'
         
         df = pd.read_csv(os.path.join(data_path, FILENAME))
-        
         df = df.rename({"salary":"Y"}, axis=1) # rename label
-        # compute years of experience
-        df['experience_int'] = df['experience'].str.split("-").str.get(0)
-        # concatenate text fields
+        df['experience_int'] = df['experience'].str.split("-").str.get(0) # compute years of experience
         df.loc[df.job_description.isnull(),'job_description']= '' # replace NaN job_description with ''
         df.loc[df.job_desig.isnull(),'job_desig']= '' # replace NaN job_desig with ''
         df.loc[df.key_skills.isnull(),'key_skills']= '' # replace NaN key_skills with ''
-        df[text_var] = df['job_description'] + ' ' + df['job_desig']+ ' ' + df['key_skills']
-        df = df[categorical_var + numerical_var + [text_var, 'Y']] # drop unused columns
+        df[text_features] = df['job_description'] + ' ' + df['job_desig']+ ' ' + df['key_skills'] # concatenate text fields
+        df = df[self.cat_features + num_features + [text_features, 'Y']] # drop unused columns
         df = df.dropna().reset_index(drop=True) # drop na
-        df[categorical_var] = df[categorical_var].astype(str) # format
-        df[numerical_var] = df[numerical_var].astype(int) # format 
+        df[self.cat_features] = df[self.cat_features].astype(str) # format
+        df[num_features] = df[num_features].astype(int) # format 
         
         le = LabelEncoder()
         df['Y'] = le.fit_transform(df['Y']) # label encoding of target variable
         
         self.y = df['Y'].values
-        self.text = df[[text_var]]
-        df = df.drop(columns=['Y', text_var])
+        self.text = df[[text_features]]
+        df = df.drop(columns=['Y', text_features])
 
         ordianl_encoder = OrdinalEncoder()
-        self.x = ordianl_encoder.fit_transform(df[categorical_var])
-        self.x = pd.concat([pd.DataFrame(self.x, columns=categorical_var), df[numerical_var]], axis=1).values
+        self.x = ordianl_encoder.fit_transform(df[self.cat_features])
+        self.x = pd.concat([pd.DataFrame(self.x, columns=self.cat_features), df[num_features]], axis=1).values
         
         
     def get_embeddings(self, save=True):

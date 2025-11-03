@@ -21,9 +21,9 @@ class ClothDataset(Dataset):
         self.data_path = data_path
         
         FILENAME = 'Womens Clothing E-Commerce Reviews.csv'
-        categorical_var = ['Division Name', 'Department Name', 'Class Name']
-        numerical_var = ['Age', 'Positive Feedback Count']
-        text_var = 'Review'
+        self.cat_features = ['Division Name', 'Department Name', 'Class Name']
+        num_features = ['Age', 'Positive Feedback Count']
+        text_features = 'Review'
             
         df = pd.read_csv(os.path.join(data_path, FILENAME))
         
@@ -32,17 +32,17 @@ class ClothDataset(Dataset):
         df['Y'] = df['Y'] - 1 # starts from 0
         df.loc[df.Title.isnull(),'Title'] = '' # replace NaN title with ''
         df.loc[df['Review Text'].isnull(),'Title'] = '' # drop NaN reviews (as title is too short)
-        df[text_var] = df['Title'] + ' ' + df['Review Text'] # concatenate title and review text
+        df[text_features] = df['Title'] + ' ' + df['Review Text'] # concatenate title and review text
         df = df.dropna().reset_index() # drop na
-        df = df[categorical_var + numerical_var + [text_var, 'Y']] # drop unused columns
+        df = df[self.cat_features + num_features + [text_features, 'Y']] # drop unused columns
         
         self.y = df['Y'].values
-        self.text = df[[text_var]]
-        df = df.drop(columns=['Y', text_var])
+        self.text = df[[text_features]]
+        df = df.drop(columns=['Y', text_features])
 
         ordianl_encoder = OrdinalEncoder()
-        self.x = ordianl_encoder.fit_transform(df[categorical_var])
-        self.x = pd.concat([pd.DataFrame(self.x, columns=categorical_var), df[numerical_var]], axis=1).values
+        self.x = ordianl_encoder.fit_transform(df[self.cat_features])
+        self.x = pd.concat([pd.DataFrame(self.x, columns=self.cat_features), df[num_features]], axis=1).values
         
         
         

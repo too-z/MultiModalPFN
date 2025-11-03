@@ -17,7 +17,7 @@ conda env create -f environment.yaml
 
 Install
 ```
-python setup.py install
+python setup.py develop
 ```
 
 Place the checkpoint file and dataset in their respective locations, then update the model_path as shown below:
