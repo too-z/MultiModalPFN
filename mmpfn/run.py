@@ -86,7 +86,8 @@ def objective(trial, dataset_name="", dataset=None, train_dataset=None, test_dat
                 show_training_curve=False,  # Shows a final report after finetuning.
                 logger_level=0,  # Shows all logs, higher values shows less
                 freeze_input=True,  # Freeze the input layers (encoder and y_encoder) during finetuning
-                mixer_type='MGM+CAP', # MGM MGM+CAP
+                # mixer_type='MGM+CAP', # MGM MGM+CAP
+                mixer_type='MoE',
                 mgm_heads=mgm_heads,
                 cap_heads=cap_heads,
                 features_per_group=features_per_group,
@@ -106,7 +107,8 @@ def objective(trial, dataset_name="", dataset=None, train_dataset=None, test_dat
             model_path=save_path_to_fine_tuned_model,
             inference_config=no_preprocessing_inference_config, 
             ignore_pretraining_limits=True,
-            mixer_type='MGM+CAP', # MGM MGM+CAP
+            # mixer_type='MGM+CAP', # MGM MGM+CAP
+            mixer_type='MoE',
             mgm_heads=mgm_heads,
             cap_heads=cap_heads,
             features_per_group=features_per_group,

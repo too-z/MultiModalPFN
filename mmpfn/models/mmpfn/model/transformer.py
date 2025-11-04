@@ -86,7 +86,47 @@ class CrossAttentionPooler(nn.Module):
         out = self.out_norm(out) + self.ffn(out)
             
         return out.unsqueeze(0)
+    
+    
+class MoE(nn.Module):
+    def __init__(self, in_dim=768, out_dim=192, n_experts=8, top_k=4):
+        super().__init__()
+        self.n_experts = n_experts
+        self.top_k = top_k
 
+        self.experts = nn.ModuleList([
+            nn.Sequential(
+                nn.LayerNorm(in_dim),
+                nn.Linear(in_dim, in_dim//2),
+                nn.GELU(),
+                nn.Dropout(p=0.1),
+                nn.Linear(in_dim//2, out_dim),
+            ) for _ in range(n_experts)
+        ])
+        self.gate = nn.Linear(in_dim, n_experts)
+
+    def forward(self, x):
+        x = x[0,:,0]
+        # batch_size = x.size(0)
+
+        gate_logits = self.gate(x)
+        gate_probs = F.softmax(gate_logits, dim=-1)
+
+        if self.top_k < self.n_experts:
+            topk_vals, topk_idx = torch.topk(gate_probs, self.top_k, dim=-1)
+            mask = torch.zeros_like(gate_probs).scatter_(1, topk_idx, 1.0)
+            gate_probs = gate_probs * mask
+            gate_probs = gate_probs / (gate_probs.sum(dim=-1, keepdim=True) + 1e-9)
+
+        expert_outs = []
+        for i, expert in enumerate(self.experts):
+            out = expert(x)
+            weighted = gate_probs[:, i].unsqueeze(-1) * out
+            expert_outs.append(weighted.unsqueeze(-2))
+
+        out = torch.cat(expert_outs, dim=-2)
+        return out.unsqueeze(0)
+    
 
 class LayerStack(nn.Module):
     """Similar to nn.Sequential, but with support for passing keyword arguments
@@ -256,6 +296,8 @@ class PerFeatureTransformer(nn.Module):
         elif mixer_type == "MGM+CAP":
             self.mgm = MultiheadGatedMLP(in_dim=nhid, out_dim=ninp, mgm_heads=mgm_heads, dropout=encoder_dropout)
             self.cap = CrossAttentionPooler(src_dim = ninp, cap_heads=cap_heads, dropout =encoder_dropout)
+        elif mixer_type == "MoE":
+            self.moe = MoE(in_dim=nhid, out_dim=ninp, n_experts=mgm_heads, top_k=max(1, mgm_heads//2))
         
         if encoder is None:
             encoder = SequentialEncoder(
@@ -710,9 +752,12 @@ class PerFeatureTransformer(nn.Module):
             )  # b s f 1 -> b s f e
         
         if image is not None:
-            image = self.mgm(image)
-            if self.mixer_type == "MGM+CAP":
-                image = self.cap(image)
+            if self.mixer_type == "MoE":
+                image = self.moe(image)
+            else:
+                image = self.mgm(image)
+                if self.mixer_type == "MGM+CAP":
+                    image = self.cap(image)
             # ed_value = self.energy_distance(embedded_x.reshape(-1, embedded_x.size(-1)), image.reshape(-1, image.size(-1)))
             # print(f"Energy Distance: {ed_value.item()}")
         # print("embedded_x.shape", embedded_x.shape)

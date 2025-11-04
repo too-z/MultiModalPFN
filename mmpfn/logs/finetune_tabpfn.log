@@ -90,3 +90,21 @@ Optimizer step skipped due to NaNs/infs in grad scaling.
 [2025-11-04 22:22:44,745] DEBUG - Initial validation loss: 1.484799152286041
 [2025-11-04 22:22:46,874] INFO - 
 Optimizer step skipped due to NaNs/infs in grad scaling.
+[2025-11-04 22:40:47,240] DEBUG - 
+    === Basic / Validation State ===
+        	Time Limit: 60
+        	Early Stopping Metric: log_loss
+        	Val Samples: 368 | Total Samples: 1838
+        	Model #parameter: 31021898
+    
+[2025-11-04 22:40:47,785] DEBUG - 
+        === Learning HPs ===
+            	Batch Size: 1
+            	Lr: 1e-05 | Weight Decay: 0
+            	Max Steps: 100
+            	AdaptiveES: Adaptive Rate 0.2 | Min Patience 50 | Max Patience 100
+            	Update Every N Steps: 1 | Validate Every N Steps: 1
+        
+[2025-11-04 22:40:51,756] DEBUG - Initial validation loss: 0.5752974143245005
+[2025-11-04 22:40:56,223] INFO - 
+Optimizer step skipped due to NaNs/infs in grad scaling.
