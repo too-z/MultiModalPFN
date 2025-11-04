@@ -11,7 +11,7 @@ from pathlib import Path
 
 from mmpfn.models.dino_v2.models.vision_transformer import vit_base
 
-from transformers import AutoTokenizer, AutoModel
+from transformers import AutoModel
 
 
 class CBISDDSMDataset(Dataset):
@@ -55,21 +55,27 @@ class CBISDDSMDataset(Dataset):
     def get_images(self, img_size=14*24): # image size must be a multiple of 14
                 
         self.images = []
-        
-        for _, paths in self.df[self.image_features].iterrows():
+        drop_index = []
+        for i, paths in self.df[self.image_features].iterrows():
             image_set = []
+            append = True
             for path in paths:
                 image_path = os.path.join(self.data_path, 'jpeg', path.split('/')[-2])
                 if not os.path.exists(image_path):
                     print(f"Image {image_path} does not exist, skipping.")
+                    append = False
+                    drop_index.append(i)
                     continue
                 image_path = os.path.join(image_path, os.listdir(image_path)[0])
                 with Image.open(image_path) as img:
                     img = img.convert("RGB")
                     img = np.array(img.resize((img_size, img_size), Image.BILINEAR), dtype=np.float32) 
                     image_set.append(img)
-            self.images.append(image_set)
-        
+            if append:
+                self.images.append(image_set)
+        self.x = np.delete(self.x, drop_index, axis=0)
+        self.y = np.delete(self.y, drop_index, axis=0)
+
         self.images = np.stack(self.images, axis=0)  # (B, N, H, W, C)
         self.images = torch.from_numpy(np.transpose(self.images, (0,1,4,2,3))).float() # (B, N, C, H, W)
         self.images /= 255.0
@@ -79,11 +85,10 @@ class CBISDDSMDataset(Dataset):
         
     def get_embeddings(self, batch_size=16, mode='train'):
         
-        # model_name = 'dinov2'
+        model_name = 'dinov2'
         # model_name = 'dinov3'
         
-        # path = f'embeddings/cbis_ddsm/{self.kind}_{mode}_{self.image_type}_{model_name}.pt'
-        path = f'embeddings/cbis_ddsm/{self.kind}_{mode}_{self.image_type}.pt'
+        path = f'embeddings/cbis_ddsm/{self.kind}_{mode}_{self.image_type}_{model_name}.pt'
 
         if os.path.exists(path):
             print(f"Load embeddings from {path}")

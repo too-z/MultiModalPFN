@@ -54,11 +54,11 @@ class ClothDataset(Dataset):
             print(f"Load embeddings from {path}")
             self.embeddings = torch.load(path)
         else:
-            local = False
+            local = True
             # model_name = "microsoft/deberta-v3-base" 
             # local_dir = ".dataset/deberta"
             model_name = "google/electra-base-discriminator"
-            local_dir = ".dataset/electra"
+            local_dir = "models/electra"
             if 'deberta' in model_name:
                 use_fast = False
             else:

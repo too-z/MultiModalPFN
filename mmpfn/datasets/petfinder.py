@@ -101,15 +101,15 @@ class PetfinderDataset(Dataset):
         batch_size=16, 
         multimodal_type='all' # image, text
     ):
-        # model_name = 'dinov2'
-        model_name = 'dinov3'
+        model_name = 'dinov2'
+        # model_name = 'dinov3'
         path = f'embeddings/petfinder/petfinder_{multimodal_type}_{model_name}.pt'
 
         if os.path.exists(path):
             print(f"Load embeddings from {path}")
             self.embeddings = torch.load(path)
         else:
-            local_image = False
+            local_image = True
             if multimodal_type == 'image' or multimodal_type == 'all':
                 if local_image:
                     image_encoder = vit_base(patch_size=14, img_size=518, init_values=1.0, num_register_tokens=0, block_chunks=0)
@@ -149,11 +149,11 @@ class PetfinderDataset(Dataset):
                     return self.embeddings
                 
             if multimodal_type == 'text' or multimodal_type == 'all':
-                local_text = False
+                local_text = True
                 # model_name = "microsoft/deberta-v3-base" 
                 # local_dir = "datasets/deberta"
                 model_name = "google/electra-base-discriminator"
-                local_dir = "datasets/electra"
+                local_dir = "models/electra"
                 if 'deberta' in model_name:
                     use_fast = False
                 else:

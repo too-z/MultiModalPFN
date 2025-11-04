@@ -22,8 +22,6 @@ import sys
 import yaml
 from functools import partial
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-
 
 def objective(trial, dataset_name="", dataset=None, train_dataset=None, test_dataset=None):
     
@@ -153,24 +151,24 @@ if __name__ == "__main__":
         test_dataset = CBISDDSMDataset(data_path=data_path, data_name=f'csv/{task_name}_case_description_test_set.csv', kind=task_name, image_type=config['image_type'])
         _ = test_dataset.get_images()
         _ = test_dataset.get_embeddings(mode='test')
-    elif dataset_name == "petfinder":
+    elif dataset_name == "petfinder-adoption-prediction":
         dataset = PetfinderDataset(data_path)
         _ = dataset.get_images()
         _ = dataset.get_embeddings(multimodal_type=task_name) # text, image, all
     elif dataset_name == "cloth":
         dataset = ClothDataset(data_path)
-        _ = dataset.get_images()
         _ = dataset.get_embeddings()
     elif dataset_name == "airbnb":
         dataset = AirbnbDataset(data_path)
-        _ = dataset.get_images()
         _ = dataset.get_embeddings()
     elif dataset_name == "salary":
         dataset = SalaryDataset(data_path)
-        _ = dataset.get_images()
         _ = dataset.get_embeddings()
 
-    n_cats = len(dataset.cat_features)
+    if dataset is None:
+        n_cats = len(train_dataset.cat_features)
+    else:
+        n_cats = len(dataset.cat_features)
 
     mgm_heads_list = config['mgm_heads_list']
     cap_heads_list = config['cap_heads_list']
