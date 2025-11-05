@@ -32,8 +32,8 @@ def objective(trial, dataset_name="", dataset=None, train_dataset=None, test_dat
     
     print(f"mgm_heads:{mgm_heads}, cap_heads:{cap_heads}")
 
-    if mgm_heads > cap_heads:
-        return None
+    if mgm_heads < cap_heads:
+        return 0.
 
     accuracy_scores = []
     for seed in range(5):
