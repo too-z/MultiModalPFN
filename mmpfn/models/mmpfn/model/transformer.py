@@ -297,7 +297,8 @@ class PerFeatureTransformer(nn.Module):
             self.mgm = MultiheadGatedMLP(in_dim=nhid, out_dim=ninp, mgm_heads=mgm_heads, dropout=encoder_dropout)
             self.cap = CrossAttentionPooler(src_dim = ninp, cap_heads=cap_heads, dropout =encoder_dropout)
         elif mixer_type == "MoE":
-            self.moe = MoE(in_dim=nhid, out_dim=ninp, n_experts=mgm_heads, top_k=max(1, mgm_heads//2))
+            # self.moe = MoE(in_dim=nhid, out_dim=ninp, n_experts=mgm_heads, top_k=max(1, mgm_heads//2))
+            self.moe = MoE(in_dim=nhid, out_dim=ninp, n_experts=mgm_heads, top_k=max(mgm_heads, cap_heads))
         
         if encoder is None:
             encoder = SequentialEncoder(
