@@ -23,12 +23,11 @@ import yaml
 from functools import partial
 
 
-def objective(trial, dataset_name="", dataset=None, train_dataset=None, test_dataset=None):
+def objective(trial, dataset_name="", dataset=None, train_dataset=None, test_dataset=None, features_per_group=2, mixer_type='MGM+CAP'):
     
     mgm_heads = trial.suggest_categorical("mgm_heads", mgm_heads_list)
     cap_heads = trial.suggest_categorical("cap_heads", cap_heads_list)
-    # features_per_group = trial.suggest_categorical("features_per_group", features_per_group_list)
-    features_per_group = 2  # fixed to 2 based on prior experiments
+    
     
     print(f"mgm_heads:{mgm_heads}, cap_heads:{cap_heads}")
 
@@ -89,8 +88,7 @@ def objective(trial, dataset_name="", dataset=None, train_dataset=None, test_dat
                 show_training_curve=False,  # Shows a final report after finetuning.
                 logger_level=0,  # Shows all logs, higher values shows less
                 freeze_input=True,  # Freeze the input layers (encoder and y_encoder) during finetuning
-                # mixer_type='MGM+CAP', # MGM MGM+CAP
-                mixer_type='MoE',
+                mixer_type=mixer_type, # MGM MGM+CAP MoE
                 mgm_heads=mgm_heads,
                 cap_heads=cap_heads,
                 features_per_group=features_per_group,
@@ -110,8 +108,7 @@ def objective(trial, dataset_name="", dataset=None, train_dataset=None, test_dat
             model_path=save_path_to_fine_tuned_model,
             inference_config=no_preprocessing_inference_config, 
             ignore_pretraining_limits=True,
-            # mixer_type='MGM+CAP', # MGM MGM+CAP
-            mixer_type='MoE',
+            mixer_type=mixer_type, # MGM MGM+CAP MoE
             mgm_heads=mgm_heads,
             cap_heads=cap_heads,
             features_per_group=features_per_group,
@@ -177,12 +174,13 @@ if __name__ == "__main__":
 
     mgm_heads_list = config['mgm_heads_list']
     cap_heads_list = config['cap_heads_list']
+    features_per_group = config['features_per_group']
+    mixer_type = config.get('mixer_type', 'MGM+CAP')
     
     study = optuna.create_study(
         sampler=optuna.samplers.GridSampler({
             'mgm_heads': mgm_heads_list,
             'cap_heads': cap_heads_list,
-            # 'features_per_group': features_per_group_list,
         }),
         direction="maximize",
     )
@@ -192,7 +190,9 @@ if __name__ == "__main__":
             dataset_name=dataset_name, 
             dataset=dataset, 
             train_dataset=train_dataset, 
-            test_dataset=test_dataset
+            test_dataset=test_dataset,
+            features_per_group=features_per_group,
+            mixer_type=mixer_type,
         ), 
         n_trials=len(mgm_heads_list) * len(cap_heads_list))
 

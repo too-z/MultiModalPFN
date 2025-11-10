@@ -1,2 +1,4 @@
 mgm_heads_list: [2,4,8,16,32,64,128,256]
 cap_heads_list: [2,4,8,12,16,24,32]
+features_per_group: 1
+mixer_type: 'MGM+CAP'  # Optional: 'MGM', 'MGM+CAP', 'MoE'
