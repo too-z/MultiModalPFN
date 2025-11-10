@@ -172,7 +172,7 @@ time_left.tsv
 events.out.tfevents
 *roc_auc_credit*.npy
 catboost_training.json
-*.png
+# *.png
 .DS_store
 
 # Dino V2
