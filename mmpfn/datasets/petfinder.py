@@ -149,7 +149,7 @@ class PetfinderDataset(Dataset):
                     return self.embeddings
                 
             if multimodal_type == 'text' or multimodal_type == 'all':
-                local_text = True
+                local_text = False
                 # model_name = "microsoft/deberta-v3-base" 
                 # local_dir = "datasets/deberta"
                 model_name = "google/electra-base-discriminator"

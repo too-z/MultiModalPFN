@@ -57,7 +57,7 @@ class SalaryDataset(Dataset):
             print(f"Load embeddings from {path}")
             self.embeddings = torch.load(path)
         else:
-            local = True
+            local = False
             # model_name = "microsoft/deberta-v3-base" 
             # local_dir = ".dataset/deberta"
             model_name = "google/electra-base-discriminator"
