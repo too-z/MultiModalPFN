@@ -156,8 +156,9 @@ class LayerStack(nn.Module):
         x: torch.Tensor,
         *,
         half_layers: bool = False,
+        get_attentions: bool = False,
         **kwargs: Any,
-    ) -> torch.Tensor:
+    ) -> torch.Tensor | tuple[torch.Tensor, list[torch.Tensor]]:
         if half_layers:
             assert (
                 self.min_num_layers_layer_dropout == self.num_layers
@@ -169,14 +170,35 @@ class LayerStack(nn.Module):
                 high=self.num_layers + 1,
                 size=(1,),
             ).item()
-
+        
+        attentions = []
         for i, layer in enumerate(self.layers[:n_layers]):
             if self.recompute_each_layer and x.requires_grad:
+                if get_attentions:
+                    warnings.warn("Cannot get attention weights with recompute_each_layer=True.")
                 x = checkpoint(partial(layer, **kwargs), x, use_reentrant=False)  # type: ignore
             else:
-                x = layer(x, **kwargs)
-
+                if get_attentions:
+                    # Manually perform forward pass to get attention weights
+                    # This assumes a standard TransformerEncoderLayer structure
+                    # self_attn -> dropout -> norm -> ffn -> dropout -> norm
+                    
+                    # Note: This might not use all kwargs passed to layer
+                    # This is a simplified forward pass for attention extraction
+                    
+                    attn_kwargs = {}
+                    if "att_src" in kwargs:
+                        attn_kwargs["att_src"] = kwargs["att_src"]
+                    
+                    output, attention = layer(x, get_attention=True, **kwargs)
+                    x = output
+                    attentions.append(attention)
+                else:
+                    x = layer(x, **kwargs)
+        if get_attentions:
+            return x, attentions
         return x
+
 
 
 class PerFeatureTransformer(nn.Module):
@@ -491,6 +513,8 @@ class PerFeatureTransformer(nn.Module):
                 The indices of categorical features.
             freeze_kv: bool
                 Whether to freeze the key and value weights.
+            get_attentions: bool
+                Whether to return attention weights.
 
         Returns:
             The output of the model, which can be a tensor or a dictionary of tensors.
@@ -498,6 +522,7 @@ class PerFeatureTransformer(nn.Module):
         self._init_rnd()
         half_layers = kwargs.pop("half_layers", False)
         assert half_layers is False
+        get_attentions = kwargs.pop("get_attentions", False)
 
         supported_kwargs = {
             "only_return_standard_out",
@@ -527,20 +552,20 @@ class PerFeatureTransformer(nn.Module):
                 x = torch.cat((x, test_x), dim=0)
             if image is not None and test_image is not None:
                 image = torch.cat((image, test_image), dim=0)
-            return self._forward(x, image, train_y, single_eval_pos=len(train_y), **kwargs)
+            return self._forward(x, image, train_y, single_eval_pos=len(train_y), get_attentions=get_attentions, **kwargs)
 
         if len(args) == 2:
             x, y = args
-            return self._forward(x, y, **kwargs)
+            return self._forward(x, y, get_attentions=get_attentions, **kwargs)
 
         if len(args) == 3:
             style, x, y = args
-            return self._forward(x, y, style=style, **kwargs)
+            return self._forward(x, y, style=style, get_attentions=get_attentions, **kwargs)
 
         if len(args) == 4:
             # for inference
             style, x, image, y = args
-            return self._forward(x, image, y, style=style, **kwargs)
+            return self._forward(x, image, y, style=style, get_attentions=get_attentions, **kwargs)
         
         raise ValueError("Unrecognized input. Please follow the doc string.")
 
@@ -566,6 +591,7 @@ class PerFeatureTransformer(nn.Module):
         data_dags: list[Any] | None = None,
         categorical_inds: list[int] | None = None,
         half_layers: bool = False,
+        get_attentions: bool = False,
     ) -> Any | dict[str, torch.Tensor]:
         """The core forward pass of the model.
 
@@ -579,6 +605,8 @@ class PerFeatureTransformer(nn.Module):
             data_dags: The data DAGs for each example in the batch.
             categorical_inds: The indices of categorical features.
             half_layers: Whether to use half the layers.
+            get_attentions: bool
+                Whether to return attention weights.
 
         Returns:
             A dictionary of output tensors.
@@ -796,7 +824,7 @@ class PerFeatureTransformer(nn.Module):
             )
         del embedded_y, embedded_x
 
-        encoder_out = self.transformer_encoder(
+        encoder_out_or_with_attentions = self.transformer_encoder(
             (
                 embedded_input
                 if not self.transformer_decoder
@@ -805,7 +833,13 @@ class PerFeatureTransformer(nn.Module):
             single_eval_pos=single_eval_pos,
             half_layers=half_layers,
             cache_trainset_representation=self.cache_trainset_representation,
+            get_attentions=get_attentions,
         )  # b s f+1 e -> b s f+1 e
+
+        if get_attentions:
+            encoder_out, attentions = encoder_out_or_with_attentions
+        else:
+            encoder_out = encoder_out_or_with_attentions
         
         correlation_matrix_avg = np.zeros((encoder_out.shape[-2], encoder_out.shape[-2]))
         for i in range(encoder_out.shape[-2]):
@@ -862,7 +896,8 @@ class PerFeatureTransformer(nn.Module):
             train_encoder_out = encoder_out[:, :single_eval_pos_, -1].transpose(0, 1)
             output_decoded["train_embeddings"] = train_encoder_out
             output_decoded["test_embeddings"] = test_encoder_out
-        
+        if get_attentions:
+            output_decoded["attentions"] = attentions
         # return output_decoded#, mmd_loss
         return output_decoded
 

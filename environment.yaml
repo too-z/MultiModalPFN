@@ -329,7 +329,7 @@ dependencies:
       - pyparsing==3.2.1
       - pytesseract==0.3.13
       - python-dateutil==2.9.0.post0
-      - python-graphviz==0.20.3
+      - graphviz==0.20.3
       - python-json-logger==3.3.0
       - pytorch-lightning==2.5.5
       - pytorch-metric-learning==2.8.1
