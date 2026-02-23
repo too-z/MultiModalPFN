@@ -4,8 +4,8 @@
 ![Contributions Welcome](https://img.shields.io/badge/contributions-welcome-brightgreen)
 ![CVPR 2026](https://img.shields.io/badge/CVPR-2026-blue)
 
-## 📰 Latest News
-🎉 **MMPFN Paper Accepted to CVPR 2026** Our work on Multi-Modal Prior-data Fitted Networks has been accepted for presentation at CVPR 2026. Check back for the camera-ready version and supplementary materials. 
+## Latest News
+**MMPFN Paper Accepted to CVPR 2026** Our work on Multi-Modal Prior-data Fitted Networks has been accepted for presentation at CVPR 2026. Check back for the camera-ready version and supplementary materials. 
 
 ## Introduction 
 > **MMPFN** is an extension of **TabPFN**, designed to handle **multimodal data** — combining tabular, image, and text inputs in a unified learning framework. While TabPFN has shown strong performance on purely tabular datasets, it lacks the ability to integrate heterogeneous modalities.
@@ -44,5 +44,5 @@ python run_pad_ufes_20_mmpfn.py
 To view the results obtained with the optimized parameters, open and execute the notebook file `run_pad_ufes_20_mmpfn.ipynb`.
 
 
-## 📘 License
+## License
 This project follows the original TabPFN license policy(Apache 2.0 with additional attribution requirement): [here](https://priorlabs.ai/tabpfn-license/)
